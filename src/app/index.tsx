@@ -8,6 +8,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTheme } from "../theme-context";
 
 type SquareValue = "X" | "O" | null;
 type Squares = SquareValue[];
@@ -52,6 +53,7 @@ function Square({
   onSquareClick,
   isWinnerSquare,
 }: SquareProps) {
+  const { colors } = useTheme();
   const row = Math.floor(index / 3) + 1;
   const column = (index % 3) + 1;
 
@@ -66,7 +68,11 @@ function Square({
       onPress={onSquareClick}
       style={({ pressed }) => [
         styles.square,
-        isWinnerSquare && styles.winnerSquare,
+        { backgroundColor: colors.square, borderColor: colors.squareBorder },
+        isWinnerSquare && {
+          backgroundColor: colors.winner,
+          borderColor: colors.winnerBorder,
+        },
         pressed && styles.pressed,
       ]}
     >
@@ -74,7 +80,7 @@ function Square({
         style={[
           styles.squareText,
           { fontSize, lineHeight: fontSize * 1.2 },
-          value === "X" ? styles.xText : styles.oText,
+          { color: value === "X" ? colors.x : colors.o },
         ]}
       >
         {value ?? ""}
@@ -96,10 +102,20 @@ function Board({
   onSquareClick,
   winnerLine = [],
 }: BoardProps) {
+  const { colors } = useTheme();
   const fontSize = Math.round(boardSize / 7);
 
   return (
-    <View style={[styles.board, { width: boardSize }]}>
+    <View
+      style={[
+        styles.board,
+        {
+          width: boardSize,
+          backgroundColor: colors.board,
+          shadowColor: colors.text,
+        },
+      ]}
+    >
       {Array.from({ length: 3 }, (_, rowIndex) => (
         <View key={rowIndex} style={styles.row}>
           {Array.from({ length: 3 }, (_, columnIndex) => {
@@ -123,6 +139,7 @@ function Board({
 }
 
 export default function Game() {
+  const { colors } = useTheme();
   const { width } = useWindowDimensions();
   const boardSize = Math.min(width - 32, 360);
   const [history, setHistory] = useState<Squares[]>([
@@ -174,15 +191,23 @@ export default function Game() {
   }));
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView
+      style={[styles.screen, { backgroundColor: colors.background }]}
+    >
       <ScrollView
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
       >
-        <Text accessibilityRole="header" style={styles.title}>
+        <Text
+          accessibilityRole="header"
+          style={[styles.title, { color: colors.text }]}
+        >
           Tic-Tac-Toe
         </Text>
-        <Text accessibilityLiveRegion="polite" style={styles.status}>
+        <Text
+          accessibilityLiveRegion="polite"
+          style={[styles.status, { color: colors.secondaryText }]}
+        >
           {status}
         </Text>
 
@@ -199,11 +224,15 @@ export default function Game() {
           onPress={resetGame}
           style={({ pressed }) => [
             styles.resetButton,
-            { width: boardSize },
+            { width: boardSize, backgroundColor: colors.primary },
             pressed && styles.pressed,
           ]}
         >
-          <Text style={styles.resetButtonText}>Reset game</Text>
+          <Text
+            style={[styles.resetButtonText, { color: colors.primaryText }]}
+          >
+            Reset game
+          </Text>
         </Pressable>
 
         {/* Plain View, not a nested ScrollView: the outer ScrollView scrolls. */}
@@ -217,11 +246,20 @@ export default function Game() {
               onPress={() => jumpTo(move)}
               style={({ pressed }) => [
                 styles.moveButton,
-                currentMove === move && styles.activeMoveButton,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                },
+                currentMove === move && {
+                  backgroundColor: colors.selected,
+                  borderColor: colors.primary,
+                },
                 pressed && styles.pressed,
               ]}
             >
-              <Text style={styles.moveText}>{description}</Text>
+              <Text style={[styles.moveText, { color: colors.text }]}>
+                {description}
+              </Text>
             </Pressable>
           ))}
         </View>
@@ -233,7 +271,6 @@ export default function Game() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#f4f7fb",
   },
   container: {
     flexGrow: 1,
@@ -246,19 +283,15 @@ const styles = StyleSheet.create({
     fontSize: 30,
     fontWeight: "700",
     marginBottom: 12,
-    color: "#1f2937",
   },
   status: {
     fontSize: 20,
     fontWeight: "600",
     marginBottom: 20,
-    color: "#0f172a",
   },
   board: {
-    backgroundColor: "#dbeafe",
     borderRadius: 16,
     padding: 8,
-    shadowColor: "#000",
     shadowOpacity: 0.08,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
@@ -271,27 +304,15 @@ const styles = StyleSheet.create({
     flex: 1,
     aspectRatio: 1,
     borderWidth: 2,
-    borderColor: "#93c5fd",
-    backgroundColor: "#eff6ff",
     alignItems: "center",
     justifyContent: "center",
     margin: 4,
     borderRadius: 12,
   },
-  winnerSquare: {
-    backgroundColor: "#86efac",
-    borderColor: "#16a34a",
-  },
   squareText: {
     fontWeight: "700",
     textAlign: "center",
     includeFontPadding: false,
-  },
-  xText: {
-    color: "#2563eb",
-  },
-  oText: {
-    color: "#dc2626",
   },
   pressed: {
     opacity: 0.7,
@@ -300,12 +321,10 @@ const styles = StyleSheet.create({
     minHeight: 48,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#2563eb",
     borderRadius: 10,
     marginTop: 16,
   },
   resetButtonText: {
-    color: "#ffffff",
     fontSize: 16,
     fontWeight: "700",
   },
@@ -317,20 +336,13 @@ const styles = StyleSheet.create({
     width: "100%",
     minHeight: 44,
     justifyContent: "center",
-    backgroundColor: "#ffffff",
     borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 16,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: "#dbeafe",
-  },
-  activeMoveButton: {
-    backgroundColor: "#bfdbfe",
-    borderColor: "#60a5fa",
   },
   moveText: {
-    color: "#1f2937",
     textAlign: "center",
     fontSize: 16,
   },
